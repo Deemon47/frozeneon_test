@@ -15,6 +15,7 @@ var app = new Vue({
 		likes: 0,
 		commentText: '',
 		boosterpacks: [],
+		errorMessage:null,
 	},
 	computed: {
 		test: function () {
@@ -59,12 +60,21 @@ var app = new Vue({
 
 				axios.post('/main_page/login', form)
 					.then(function (response) {
+						if('error_message' in response.data)
+						{
+							self.errorMessage=response.data.error_message;
+							return;
+						}
+						self.errorMessage=null;
 						if(response.data.user) {
 							location.reload();
+
 						}
 						setTimeout(function () {
 							$('#loginModal').modal('hide');
 						}, 500);
+
+
 					})
 			}
 		},

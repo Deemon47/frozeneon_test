@@ -3,6 +3,7 @@
 use Model\Boosterpack_model;
 use Model\Post_model;
 use Model\User_model;
+use Model\Login_model;
 
 /**
  * Created by PhpStorm.
@@ -46,13 +47,35 @@ class Main_page extends MY_Controller
     public function login()
     {
         // TODO: task 1, аутентификация
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('login', 'Login', 'required|valid_email');
+        $this->form_validation->set_rules('password', 'Password', 'required');
+        if ($this->form_validation->run() == FALSE)
+        {
+            $this->response_error($this->form_validation->error_string());
+        }
+        else
+        {
+            try {
 
-        return $this->response_success();
+                $user=Login_model::login();
+                return $this->response_success(['user'=>[
+                    'id'=>$user->get_id(),
+                ]]);
+
+            } catch (Exception $e) {
+
+                $this->response_error($e->getMessage());
+            }
+        }
     }
 
     public function logout()
     {
         // TODO: task 1, аутентификация
+        Login_model::logout();
+
+        return $this->response(redirect('/'));
     }
 
     public function comment()

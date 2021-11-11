@@ -144,6 +144,12 @@ use Model\User_model;
               </div>
             </div>
           </form>
+          <div class="alert alert-danger" v-if="errorMessage">
+            <i class="fa fa-exclamation"></i>
+            <div v-html="errorMessage"></div>
+          </div>
+
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
