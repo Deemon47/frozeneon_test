@@ -4,6 +4,7 @@ use Model\Boosterpack_model;
 use Model\Post_model;
 use Model\User_model;
 use Model\Login_model;
+use Model\Comment_model;
 
 /**
  * Created by PhpStorm.
@@ -38,6 +39,10 @@ class Main_page extends MY_Controller
         return $this->response_success(['posts' => $posts]);
     }
 
+    public function get_user_auth()
+    {
+        $this->response_success(['is_logged'=>User_model::is_logged()]);
+    }
     public function get_boosterpacks()
     {
         $posts =  Boosterpack_model::preparation_many(Boosterpack_model::get_all(), 'default');
@@ -77,10 +82,48 @@ class Main_page extends MY_Controller
 
         return $this->response(redirect('/'));
     }
+    public function get_sub_comments(int $reply_id)
+    {
 
+        try {
+            return $this->response_success(['comments'=>Comment_model::preparation_many(Comment_model::get_all_by_replay_id($reply_id))]);
+
+        } catch (Exception $e) {
+
+            $this->response_error($e->getMessage());
+        }
+    }
     public function comment()
     {
         // TODO: task 2, комментирование
+        if(!User_model::is_logged())
+            return $this->response_error('Authorization required');
+
+        $this->load->library('form_validation');
+        $validator=App::get_ci()->form_validation;
+        $validator->set_rules('postId', 'Post ID', 'required|integer|min_length[1]')
+            ->set_rules('commentText','Comment text','required')
+            ->set_rules('replyId','Reply ID','integer|min_length[1]')
+        ;
+        if ($validator->run() == FALSE)
+        {
+            $this->response_error($validator->error_string());
+        }
+        else
+        {
+            try {
+
+                return $this->response_success(['comment'=>Comment_model::preparation(Comment_model::create([
+                    'user_id'=>User_model::get_session_id(),
+                   'assign_id'=>$_POST['postId'],
+                   'text'=>$_POST['commentText'],
+                   'reply_id'=>$_POST['replyId'],
+                ]))]);
+            } catch (Exception $e) {
+
+                $this->response_error($e->getMessage());
+            }
+        }
     }
 
     public function like_comment(int $comment_id)
@@ -103,6 +146,8 @@ class Main_page extends MY_Controller
 
     public function get_post(int $post_id) {
         // TODO получения поста по id
+        $post=Post_model::find_post_by_id($post_id);
+        return $this->response_success(['post'=>Post_model::preparation($post,'full_info')]);
     }
 
     public function buy_boosterpack()

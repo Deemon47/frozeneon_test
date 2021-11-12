@@ -152,6 +152,7 @@ class Post_model extends Emerald_Model
     public function get_comments():array
     {
        // TODO: task 2, комментирование
+        return Comment_model::get_all_by_assign_id($this->get_id());
     }
 
     /**
@@ -177,6 +178,13 @@ class Post_model extends Emerald_Model
     {
         parent::__construct();
         $this->set_id($id);
+    }
+
+    public static function find_post_by_id(int $post_id):Post_model
+    {
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)
+            ->where('id',$post_id)
+            ->one());
     }
 
     public function reload()

@@ -195,21 +195,13 @@ use Model\User_model;
                   <span>{{likes}}</span>
                 </div>
               </div>
-              <p class="card-text" v-for="comment in post.coments">
-                  {{comment.user.personaname + ' - '}}
-                  <small class="text-muted">{{comment.text}}</small>
-                  <a role="button" @click="addLike('comment', comment.id)">
-                      <svg class="bi bi-heart-fill" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z" clip-rule="evenodd"/>
-                      </svg>
-                      {{ comment.likes }}
-                  </a>
-              </p>
+              <comment v-for="comment in post.coments" :warn-message="warnMessage" :comment="comment" @like="addLikeToComment" @reply="replyToComment"></comment>
+              <div class="alert alert-warning" v-if="warnMessage">{{warnMessage}}</div>
               <form class="form-inline">
                 <div class="form-group">
                   <input type="text" class="form-control" id="addComment" v-model="commentText">
                 </div>
-                <button type="button" class="btn btn-primary" @click="addComment(post.id)">Add comment</button>
+                <button type="button" class="btn btn-primary" @click="addComment(post.id)" :disabled="!is_logged || !commentText">Add comment</button>
               </form>
             </div>
           </div>
