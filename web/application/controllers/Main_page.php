@@ -116,6 +116,7 @@ class Main_page extends MY_Controller
                 return $this->response_success(['comment'=>Comment_model::preparation(Comment_model::create([
                     'user_id'=>User_model::get_session_id(),
                    'assign_id'=>$_POST['postId'],
+                   'likes'=>0,
                    'text'=>$_POST['commentText'],
                    'reply_id'=>$_POST['replyId'],
                 ]))]);
@@ -129,11 +130,50 @@ class Main_page extends MY_Controller
     public function like_comment(int $comment_id)
     {
         // TODO: task 3, лайк комментария
+
+        $comment=Comment_model::find($comment_id);
+        if(!$comment)
+            return $this->response_error('Comment not found');
+
+        $user=User_model::get_user();
+        if($user->get_likes_balance()<=0)
+            return $this->response_error('Likes balance is empty');
+        App::get_s()->start_trans();
+        if(!$comment->increment_likes($user))
+        {
+            App::get_s()->rollback();
+            return  $this->response_error('Something going wrong,please try again');
+        }
+        App::get_s()->commit();
+        $likes=$comment->get_likes_from_db();
+        if(is_null($likes))
+            return  $this->response_error('Likes not found');
+
+        return  $this->response(compact('likes'));
     }
 
     public function like_post(int $post_id)
     {
         // TODO: task 3, лайк поста
+        $post=Post_model::find($post_id);
+        if(!$post)
+            return $this->response_error('Post not found');
+
+        $user=User_model::get_user();
+        if($user->get_likes_balance()<=0)
+            return $this->response_error('Likes balance is empty');
+        App::get_s()->start_trans();
+        if(!$post->increment_likes($user))
+        {
+            App::get_s()->rollback();
+            return  $this->response_error('Something going wrong,please try again');
+        }
+        App::get_s()->commit();
+        $likes=$post->get_likes_from_db();
+        if(is_null($likes))
+            return  $this->response_error('Likes not found');
+
+        return  $this->response(compact('likes'));
     }
 
     public function add_money()

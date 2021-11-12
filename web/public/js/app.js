@@ -65,7 +65,12 @@ Vue.component('comment', {
 		},
 		addLike:function ()
 		{
-			this.$emit('like',this.comment.id);
+			var self=this;
+			this.$emit('like', {
+				id:this.comment.id,
+				callback:function (likes){
+					self.comment.likes=likes;
+			}});
 		},
 		reply() {
 			if(!this.commentText)
@@ -237,13 +242,16 @@ var app = new Vue({
 					}
 				})
 		},
-		addLike: function (type, id) {
+		addLike: function (type, id,callback) {
 			var self = this;
 			const url = '/main_page/like_' + type + '/' + id;
 			axios
 				.get(url)
 				.then(function (response) {
-					self.likes = response.data.likes;
+					if(type=='post')
+						self.likes = response.data.likes;
+					if(callback)
+						callback(response.data.likes);
 				})
 
 		},
@@ -261,9 +269,9 @@ var app = new Vue({
 					}
 				})
 		},
-		addLikeToComment:function (comment_id)
+		addLikeToComment:function (data)
 		{
-			this.addLike('comment',comment_id);
+			this.addLike('comment',data.id,data.callback);
 		},
 		replyToComment:function (comment)
 		{

@@ -13,6 +13,7 @@ use System\Emerald\Emerald_model;
  */
 class Post_model extends Emerald_Model
 {
+    use IncrementLikesTrait;
     const CLASS_TABLE = 'post';
 
 
@@ -215,17 +216,25 @@ class Post_model extends Emerald_Model
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->many());
     }
 
-    /**
-     * @param User_model $user
-     *
-     * @return bool
-     * @throws Exception
-     */
-    public function increment_likes(User_model $user): bool
-    {
-        // TODO: task 3, лайк поста
-    }
+//    Moved to trait IncrementLikesTrait
+//    /**
+//     * @param User_model $user
+//     *
+//     * @return bool
+//     * @throws Exception
+//     */
+//    public function increment_likes(User_model $user): bool
+//    {
+//        // TODO: task 3, лайк поста
+//    }
 
+    public static function find(int $id): Post_model
+    {
+        // TODO: task 1, аутентификация
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)
+            ->where(compact('id'))
+            ->one());
+    }
 
     /**
      * @param Post_model $data
