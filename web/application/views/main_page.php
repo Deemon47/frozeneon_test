@@ -252,7 +252,8 @@ use Model\User_model;
           </button>
         </div>
         <div class="modal-body">
-          <h2 class="text-center">Likes: {{amount}}</h2>
+          <h2 class="text-center" v-if="!bpErrorMessage">Likes: {{amount}}</h2>
+          <div class="alert alert-danger" v-if="bpErrorMessage">{{bpErrorMessage}}</div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>

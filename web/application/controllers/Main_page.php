@@ -238,6 +238,30 @@ class Main_page extends MY_Controller
         }
 
         // TODO: task 5, покупка и открытие бустерпака
+
+        $this->load->library('form_validation');
+        $validator=App::get_ci()->form_validation;
+        $validator->set_rules('id', 'ID', 'required|integer|min_length[1]');
+        $pack=Boosterpack_model::get_by_id((int)App::get_ci()->input->post('id'));
+        if(!$pack->get_id())
+            return  $this->response_error('Boosterpack not found');
+        $user=User_model::get_user();
+        if($pack->get_price()>$user->get_wallet_balance())
+            return  $this->response_error('Insufficient funds');
+        App::get_s()->start_trans();
+        try {
+            $amount=$pack->open();
+            $user->remove_money($pack->get_price(),$amount);
+
+        }
+        catch (Exception $e)
+        {
+            App::get_s()->rollback();
+            return $this->response_error($e->getMessage());
+        }
+        App::get_s()->commit();
+        return  $this->response_success(compact('amount'));
+
     }
 
 

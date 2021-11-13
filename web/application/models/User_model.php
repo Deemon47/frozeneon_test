@@ -302,11 +302,19 @@ class User_model extends Emerald_model {
      * @return bool
      * @throws \ShadowIgniterException
      */
-    public function remove_money(float $sum): bool
+    public function remove_money(float $sum,int $likes=0): bool
     {
         // TODO: task 5, списание денег
+        $updateStr=sprintf('wallet_balance = wallet_balance - %s', App::get_s()->quote($sum));
+        if($likes)
+            $updateStr.=sprintf(', likes_balance = likes_balance - %s', App::get_s()->quote($likes));
 
-        return TRUE;
+        App::get_s()->from(self::get_table())
+            ->where(['id' => $this->get_id()])
+            ->update($updateStr)
+            ->execute();
+
+        return App::get_s()->is_affected();
     }
 
     /**

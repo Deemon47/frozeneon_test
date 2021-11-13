@@ -167,8 +167,9 @@ class Comment_model extends Emerald_Model {
      */
     public function set_reply_id(int $reply_id)
     {
-        $this-
-        // TODO: task 3, лайк комментария>reply_id = $reply_id;
+
+        // TODO: task 3, лайк комментария
+        $this->reply_id = $reply_id;
         return $this->save('reply_id', $reply_id);
     }
 

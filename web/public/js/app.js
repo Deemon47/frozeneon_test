@@ -114,6 +114,7 @@ var app = new Vue({
 		commentText: '',
 		boosterpacks: [],
 		errorMessage:null,
+		bpErrorMessage:null,
 	},
 	computed: {
 		test: function () {
@@ -259,9 +260,12 @@ var app = new Vue({
 			var self= this;
 			var pack = new FormData();
 			pack.append('id', id);
+			this.bpErrorMessage=null;
 			axios.post('/main_page/buy_boosterpack', pack)
 				.then(function (response) {
 					self.amount = response.data.amount
+					if(response.data.error_message)
+						self.bpErrorMessage=response.data.error_message;
 					if(self.amount !== 0){
 						setTimeout(function () {
 							$('#amountModal').modal('show');

@@ -88,4 +88,17 @@ class Item_model extends Emerald_model {
 
         return App::get_s()->is_affected();
     }
+    public static function get_rand_by_bp(Boosterpack_model $bp): Item_model
+    {
+        $maxPrice=$bp->get_bank() + $bp->get_price() - $bp->get_us();
+        return static::transform_one(App::get_s()->from(Boosterpack_info_model::CLASS_TABLE)
+            ->where([
+                'boosterpack_id'=>$bp->get_id(),
+                'price <=' =>$maxPrice,
+            ])
+            ->join(static::CLASS_TABLE,[static::CLASS_TABLE.'.id'=>Boosterpack_info_model::CLASS_TABLE.'.item_id'])
+            ->order('rand()')
+            ->select(static::CLASS_TABLE.'.*')
+            ->one());
+    }
 }

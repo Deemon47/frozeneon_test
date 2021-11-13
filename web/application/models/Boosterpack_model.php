@@ -167,13 +167,30 @@ class Boosterpack_model extends Emerald_model
     {
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->many());
     }
-
+    public static function get_by_id(int $id):Boosterpack_model
+    {
+        return  static::transform_one(App::get_s()->from(self::CLASS_TABLE)
+            ->where(compact('id'))
+                ->one());
+    }
     /**
      * @return int
+     *
+     * @throws Exception
      */
     public function open(): int
     {
         // TODO: task 5, покупка и открытие бустерпака
+
+        $item=Item_model::get_rand_by_bp($this);
+        if(!$item->get_id())
+            throw new Exception('Limit reached, no items available');
+
+        App::get_s()->from(static::CLASS_TABLE)
+            ->update(sprintf('bank= bank + price - us - %s',App::get_s()->quote($item->get_price())))
+            ->execute();
+
+        return $item->get_price();
     }
 
     /**
