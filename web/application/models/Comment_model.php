@@ -14,6 +14,7 @@ use System\Emerald\Emerald_model;
  * Time: 10:10
  */
 class Comment_model extends Emerald_Model {
+    use IncrementLikesTrait;
     const CLASS_TABLE = 'comment';
 
 
@@ -166,6 +167,8 @@ class Comment_model extends Emerald_Model {
      */
     public function set_reply_id(int $reply_id)
     {
+
+        // TODO: task 3, лайк комментария
         $this->reply_id = $reply_id;
         return $this->save('reply_id', $reply_id);
     }
@@ -234,23 +237,38 @@ class Comment_model extends Emerald_Model {
      */
     public static function get_all_by_assign_id(int $assign_id): array
     {
-        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id])->orderBy('time_created', 'ASC')->many());
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)
+            ->where([
+                'assign_id' => $assign_id,
+                'reply_id'=>null,
+            ])->orderBy('time_created', 'ASC')->many());
     }
+// Moved to trait IncrementLikesTrait
+//    /**
+//     * @param User_model $user
+//     *
+//     * @return bool
+//     * @throws Exception
+//     */
+//    public function increment_likes(User_model $user): bool
+//    {
+//        // TODO: task 3, лайк комментария
+//    }
 
-    /**
-     * @param User_model $user
-     *
-     * @return bool
-     * @throws Exception
-     */
-    public function increment_likes(User_model $user): bool
+    public static function find(int $id): Comment_model
     {
-        // TODO: task 3, лайк комментария
+        // TODO: task 1, аутентификация
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)
+            ->where(compact('id'))
+            ->one());
     }
-
     public static function get_all_by_replay_id(int $reply_id)
     {
         // TODO task 2, дополнительно, вложенность комментариев
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)
+            ->where(['reply_id' => $reply_id])
+            ->orderBy('time_created', 'ASC')
+            ->many());
     }
 
     /**

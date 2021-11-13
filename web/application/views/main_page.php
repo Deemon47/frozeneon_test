@@ -45,7 +45,7 @@ use Model\User_model;
         </li>
         <li class="nav-item">
             <?  if (User_model::is_logged()) {?>
-                <a href="" role="button">
+                <a href="#" @click="loadPayments" role="button">
                     Likes:
                 </a>
             <? }?>
@@ -144,6 +144,12 @@ use Model\User_model;
               </div>
             </div>
           </form>
+          <div class="alert alert-danger" v-if="errorMessage">
+            <i class="fa fa-exclamation"></i>
+            <div v-html="errorMessage"></div>
+          </div>
+
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -189,21 +195,13 @@ use Model\User_model;
                   <span>{{likes}}</span>
                 </div>
               </div>
-              <p class="card-text" v-for="comment in post.coments">
-                  {{comment.user.personaname + ' - '}}
-                  <small class="text-muted">{{comment.text}}</small>
-                  <a role="button" @click="addLike('comment', comment.id)">
-                      <svg class="bi bi-heart-fill" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z" clip-rule="evenodd"/>
-                      </svg>
-                      {{ comment.likes }}
-                  </a>
-              </p>
+              <comment v-for="comment in post.coments" :warn-message="warnMessage" :comment="comment" @like="addLikeToComment" @reply="replyToComment"></comment>
+              <div class="alert alert-warning" v-if="warnMessage">{{warnMessage}}</div>
               <form class="form-inline">
                 <div class="form-group">
                   <input type="text" class="form-control" id="addComment" v-model="commentText">
                 </div>
-                <button type="button" class="btn btn-primary" @click="addComment(post.id)">Add comment</button>
+                <button type="button" class="btn btn-primary" @click="addComment(post.id)" :disabled="!is_logged || !commentText">Add comment</button>
               </form>
             </div>
           </div>
@@ -243,6 +241,108 @@ use Model\User_model;
     </div>
   </div>
   <!-- Modal -->
+  <div class="modal fade" id="history" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">History</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link active" href="#p_history" data-toggle="tab" >Payments / Withdraws</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#p_total" @click="loadTotal" data-toggle="tab" >Total</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#p_boosterpacks" @click="loadBP()" data-toggle="tab" >Boosterpacks</a>
+            </li>
+          </ul>
+          <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="p_history" role="tabpanel" aria-labelledby="nav-home-tab">
+
+              <table class="table table-sriped">
+                <thead>
+
+                  <tr>
+                    <td>#</td>
+                    <td>Amount</td>
+                    <td>Date</td>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in payments">
+                    <td>{{row.id}}</td>
+                    <td>{{row.amount}} USD</td>
+                    <td>{{row.time_created}}</td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+            </div>
+            <div class="tab-pane fade" id="p_total" role="tabpanel" aria-labelledby="nav-profile-tab">
+              <div class="row col-md-4">
+                <p class="text-center">
+                  Total withdrawn:
+                </p>
+                <div class="h1">
+                  {{total_withdrawn}}
+                </div>
+              </div>
+              <div class="row col-md-4">
+                <p class="text-center">
+                  Total refilled:
+                </p>
+                <div class="h1">
+                  {{total_refilled}}
+                </div>
+              </div>
+              <div class="row col-md-4">
+                <p class="text-center">
+                  Wallet balance:
+                </p>
+                <div class="h1">
+                  {{wallet_balance}}
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="p_boosterpacks" role="tabpanel" aria-labelledby="nav-profile-tab">
+              <table class="table table-sriped">
+                <thead>
+
+                  <tr>
+                    <td>Amount</td>
+                    <td>Likes</td>
+                    <td>Date</td>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in boosterpacksStat">
+                    <td>{{row.amount}}</td>
+                    <td>{{row.likes}}</td>
+                    <td>{{row.time_created}}</td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success" data-dismiss="modal" aria-label="Close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal -->
   <div class="modal fade" id="amountModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
        aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -254,7 +354,8 @@ use Model\User_model;
           </button>
         </div>
         <div class="modal-body">
-          <h2 class="text-center">Likes: {{amount}}</h2>
+          <h2 class="text-center" v-if="!bpErrorMessage">Likes: {{amount}}</h2>
+          <div class="alert alert-danger" v-if="bpErrorMessage">{{bpErrorMessage}}</div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>

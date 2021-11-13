@@ -268,7 +268,30 @@ class User_model extends Emerald_model {
     public function add_money(float $sum): bool
     {
         // TODO: task 4, добавление денег
-
+        // -- Транзакция объединяет запросы для того чтобы выполнились либо оба,
+        // либо не одного чтобы не было не согласованных изменений
+        // -- Обнолвнеие значений полей пользвателя нужно выполенять через получение данных из того же запроса,
+        // чтобы данные были точные: Если вместо этого запроса просто обновить данные полученые из увеличения
+        // суммы полученных данных из SELECT запроса и после выполнить UPDATE то данные могут быть паралельно
+        // обновлены другим потоком в перыве между SELECT и UPDATE  и это привет к тому что на балансе не
+        // будут отображаться данные внесенные этим параллельным потоком
+        // -- Лог операций в отдельной таблице необходим для возможности дальнейшей отмены операции
+        App::get_s()->start_trans();
+        if(!App::get_s()->from(static::CLASS_TABLE)
+                ->where('id',$this->get_id())
+                ->update(sprintf('wallet_total_refilled = wallet_total_refilled + %s, wallet_balance = wallet_balance + %s',$quoted=App::get_s()->quote($sum),$quoted))
+                ->execute()
+            || !Analytics_model::create([
+                'user_id'=>$this->get_id(),
+                'object'=>Transaction_info::WALLET,
+                'action'=>Transaction_type::REFILL,
+                'amount'=>$sum,
+            ]))
+        {
+            App::get_s()->rollback();
+            return FALSE;
+        }
+        App::get_s()->commit();
         return TRUE;
     }
 
@@ -279,11 +302,26 @@ class User_model extends Emerald_model {
      * @return bool
      * @throws \ShadowIgniterException
      */
-    public function remove_money(float $sum): bool
+    public function remove_money(float $sum,int $likes=0,int $bp_id=null): bool
     {
         // TODO: task 5, списание денег
+        $updateStr=sprintf('wallet_balance = wallet_balance - %s', App::get_s()->quote($sum));
+        if($likes)
+            $updateStr.=sprintf(', likes_balance = likes_balance - %s', App::get_s()->quote($likes));
 
-        return TRUE;
+        return  App::get_s()->from(self::get_table())
+                ->where(['id' => $this->get_id()])
+                ->update($updateStr)
+                ->execute()
+            && Analytics_model::create([
+                'user_id'=>$this->get_id(),
+                'object'=>Transaction_info::BOOSTERPACK,
+                'object_id'=>$bp_id,
+                'action'=>Transaction_type::BUY,
+                'likes'=>$likes?$likes:null,
+                'amount'=>$sum,
+            ]);
+
     }
 
     /**
@@ -347,6 +385,9 @@ class User_model extends Emerald_model {
     public static function find_user_by_email(string $email): User_model
     {
         // TODO: task 1, аутентификация
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)
+            ->where(compact('email'))
+            ->one());
     }
 
     /**
