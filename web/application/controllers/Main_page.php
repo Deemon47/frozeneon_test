@@ -2,9 +2,12 @@
 
 use Model\Boosterpack_model;
 use Model\Post_model;
+use Model\Transaction_type;
+use Model\Transaction_info;
 use Model\User_model;
 use Model\Login_model;
 use Model\Comment_model;
+use Model\Analytics_model;
 
 /**
  * Created by PhpStorm.
@@ -182,8 +185,7 @@ class Main_page extends MY_Controller
 
         $this->load->library('form_validation');
         $validator=App::get_ci()->form_validation;
-        $validator->set_rules('sum', 'Sum', 'required|numeric|min_length[1]')
-            ->set_rules('email','Email','required|valid_email');
+        $validator->set_rules('sum', 'Sum', 'required|numeric|min_length[1]');
         if(!$validator->run())
             return $this->response_error($validator->error_string());
 
@@ -191,12 +193,11 @@ class Main_page extends MY_Controller
         $sum = (float)$input->post('sum');
 
         // Не хватает данных пользователя
-        $email = (string)$input->post('email');
         // Не хватает проверки источника данных по хосту, серетному ключу и шифрованию данных
 
-        $user=User_model::find_user_by_email($email);
+        $user=User_model::get_user();
         if(!$user->get_id())
-            return $this->response_error('User not found');
+            return $this->response_error('Authorization required');
 
         if(!$user->add_money($sum))
             return  $this->response_error('Something went wrong');
@@ -282,4 +283,45 @@ class Main_page extends MY_Controller
 
         //TODO получить содержимое бустерпака
     }
+    public function get_payments()
+    {
+        // Check user is authorize
+        if ( ! User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        $user=User_model::get_user();
+        $payments=Analytics_model::preparation_many(Analytics_model::get_analytics_for_user($user->get_id()));
+
+        return  $this->response_success(compact('payments'));
+    }
+    public function get_total()
+    {
+
+        // Check user is authorize
+        if ( ! User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        $user=User_model::get_user();
+        return  $this->response_success([
+            'total_withdrawn'=>$user->get_wallet_total_withdrawn(),
+            'total_refilled'=>$user->get_wallet_total_refilled(),
+            'wallet_balance'=>$user->get_wallet_balance(),
+        ]);
+    }
+    public function get_boosterpacks_info()
+    {
+
+        // Check user is authorize
+        if ( ! User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        $user=User_model::get_user();
+        $boosterpacks=Analytics_model::preparation_many(Analytics_model::get_bp_analytics_for_user($user->get_id()));
+        return  $this->response_success(compact('boosterpacks'));
+
+    }
+
 }

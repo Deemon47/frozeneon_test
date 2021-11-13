@@ -115,6 +115,11 @@ var app = new Vue({
 		boosterpacks: [],
 		errorMessage:null,
 		bpErrorMessage:null,
+		payments:null,
+		total_withdrawn:null,
+		total_refilled:null,
+		wallet_balance:null,
+		boosterpacksStat:null,
 	},
 	computed: {
 		test: function () {
@@ -281,6 +286,51 @@ var app = new Vue({
 		{
 			this.sendAddCommentRequest(comment.text,comment.reply_id,comment.callback);
 		},
+		loadPayments:function ()
+		{
+			if(this.payments===null)
+			{
+				var self=this;
+				axios.get('/main_page/get_payments' )
+					.then(function (response) {
+						self.payments = response.data.payments
+						setTimeout(function () {
+							$('#history').modal('show');
+						}, 500);
+					})
+			}
+			else
+				$('#history').modal('show');
+		},
+		loadTotal:function ()
+		{
+			var self= this;
+			if(this.total_refilled===null)
+			axios.get('/main_page/get_total' )
+				.then(function (response) {
+					self.total_withdrawn = response.data.total_withdrawn;
+					self.total_refilled = response.data.total_refilled;
+					self.wallet_balance = response.data.wallet_balance;
+					setTimeout(function () {
+						$('#history').modal('show');
+					}, 500);
+				})
+		},
+		loadBP:function()
+		{
+
+			var self= this;
+			if(this.boosterpacksStat===null)
+			axios.get('/main_page/get_boosterpacks_info' )
+				.then(function (response) {
+					self.boosterpacksStat = response.data.boosterpacks;
+					setTimeout(function () {
+						$('#history').modal('show');
+					}, 500);
+				})
+		}
+
+
 	}
 });
 

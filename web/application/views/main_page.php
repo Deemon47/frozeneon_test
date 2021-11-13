@@ -45,7 +45,7 @@ use Model\User_model;
         </li>
         <li class="nav-item">
             <?  if (User_model::is_logged()) {?>
-                <a href="" role="button">
+                <a href="#" @click="loadPayments" role="button">
                     Likes:
                 </a>
             <? }?>
@@ -236,6 +236,108 @@ use Model\User_model;
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-success" @click="refill">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal -->
+  <div class="modal fade" id="history" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">History</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link active" href="#p_history" data-toggle="tab" >Payments / Withdraws</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#p_total" @click="loadTotal" data-toggle="tab" >Total</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#p_boosterpacks" @click="loadBP()" data-toggle="tab" >Boosterpacks</a>
+            </li>
+          </ul>
+          <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="p_history" role="tabpanel" aria-labelledby="nav-home-tab">
+
+              <table class="table table-sriped">
+                <thead>
+
+                  <tr>
+                    <td>#</td>
+                    <td>Amount</td>
+                    <td>Date</td>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in payments">
+                    <td>{{row.id}}</td>
+                    <td>{{row.amount}} USD</td>
+                    <td>{{row.time_created}}</td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+            </div>
+            <div class="tab-pane fade" id="p_total" role="tabpanel" aria-labelledby="nav-profile-tab">
+              <div class="row col-md-4">
+                <p class="text-center">
+                  Total withdrawn:
+                </p>
+                <div class="h1">
+                  {{total_withdrawn}}
+                </div>
+              </div>
+              <div class="row col-md-4">
+                <p class="text-center">
+                  Total refilled:
+                </p>
+                <div class="h1">
+                  {{total_refilled}}
+                </div>
+              </div>
+              <div class="row col-md-4">
+                <p class="text-center">
+                  Wallet balance:
+                </p>
+                <div class="h1">
+                  {{wallet_balance}}
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="p_boosterpacks" role="tabpanel" aria-labelledby="nav-profile-tab">
+              <table class="table table-sriped">
+                <thead>
+
+                  <tr>
+                    <td>Amount</td>
+                    <td>Likes</td>
+                    <td>Date</td>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in boosterpacksStat">
+                    <td>{{row.amount}}</td>
+                    <td>{{row.likes}}</td>
+                    <td>{{row.time_created}}</td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success" data-dismiss="modal" aria-label="Close">Close</button>
         </div>
       </div>
     </div>

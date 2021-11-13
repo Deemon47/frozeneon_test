@@ -2,6 +2,7 @@
 namespace Model;
 use App;
 use System\Emerald\Emerald_model;
+use StdClass;
 
 class Analytics_model extends Emerald_Model
 {
@@ -11,15 +12,15 @@ class Analytics_model extends Emerald_Model
     protected $user_id;
     /** @var String describes the object with which it is carried interaction (boosterpack, wallet, etc)  */
     protected $object;
-    /** @var Int action with object (buy boosterpack, add money to wallet ...) */
+    /** @var String action with object (buy boosterpack, add money to wallet ...) */
     protected $action;
     /** @var Int object id with which user interaction */
     protected $object_id;
     /** @var Int */
     protected $amount;
-    /** @var Int */
+    /** @var String */
     protected $time_created;
-    /** @var Int */
+    /** @var String */
     protected $time_updated;
 
     /**
@@ -60,9 +61,9 @@ class Analytics_model extends Emerald_Model
     }
 
     /**
-     * @return Int
+     * @return String
      */
-    public function get_action():int
+    public function get_action():String
     {
         return $this->action;
     }
@@ -76,11 +77,28 @@ class Analytics_model extends Emerald_Model
         $this->action = $action;
         return $this->save('action', $action);
     }
+    /**
+     * @return Int
+     */
+    public function get_likes():?int
+    {
+        return $this->likes;
+    }
+
+    /**
+     * @param likes
+     * @return bool
+     */
+    public function set_likes(int $likes):bool
+    {
+        $this->likes = $likes;
+        return $this->save('likes', $likes);
+    }
 
     /**
      * @return Int
      */
-    public function get_object_id():int
+    public function get_object_id():?int
     {
         return $this->object_id;
     }
@@ -178,9 +196,62 @@ class Analytics_model extends Emerald_Model
         return App::get_s()->is_affected();
     }
 
-    public function get_analytics_for_user(int $user_id): array
+    public static function get_analytics_for_user(int $user_id): array
     {
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['user_id' => $user_id])->orderBy('time_created', 'ASC')->many());
+    }
+
+    public static function get_bp_analytics_for_user(int $user_id): array
+    {
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)
+            ->where([
+                'user_id' => $user_id,
+                'object'=>Transaction_info::BOOSTERPACK,
+                'action'=>Transaction_type::BUY,
+            ])->orderBy('time_created', 'ASC')
+            ->many());
+    }
+
+    /**
+     * @param Analytics_model $data
+     * @param string $preparation
+     * @return stdClass
+     * @throws Exception
+     */
+    public static function preparation(Analytics_model $data, $preparation = 'default'):stdClass
+    {
+        switch ($preparation)
+        {
+            case 'default':
+                return self::_preparation_default($data);
+            default:
+                throw new Exception('undefined preparation type');
+        }
+    }
+
+    /**
+     * @param Analytics_model $data
+     * @return stdClass
+     */
+    private static function _preparation_default(Analytics_model  $data):stdClass
+    {
+        $o = new stdClass();
+
+        $o->id = $data->get_id();
+        $o->action = $data->get_action();
+        $o->amount = $data->get_amount();
+
+        $o->object = $data->get_object();
+        $o->object_id = $data->get_object_id();
+
+        $o->likes = $data->get_likes();
+
+
+
+        $o->time_created = $data->get_time_created();
+        $o->time_updated = $data->get_time_updated();
+
+        return $o;
     }
 
 }
