@@ -112,13 +112,13 @@ class Main_page extends MY_Controller
         else
         {
             try {
-
+                $input=App::get_ci()->input;
                 return $this->response_success(['comment'=>Comment_model::preparation(Comment_model::create([
-                    'user_id'=>User_model::get_session_id(),
-                   'assign_id'=>$_POST['postId'],
+                   'user_id'=>User_model::get_session_id(),
+                   'assign_id'=>(int) $input->post('postId'),
                    'likes'=>0,
-                   'text'=>$_POST['commentText'],
-                   'reply_id'=>$_POST['replyId'],
+                   'text'=>(string) $input->post('commentText'),
+                   'reply_id'=>(int) $input->post('replyId'),
                 ]))]);
             } catch (Exception $e) {
 
@@ -132,7 +132,7 @@ class Main_page extends MY_Controller
         // TODO: task 3, лайк комментария
 
         $comment=Comment_model::find($comment_id);
-        if(!$comment)
+        if(!$comment->get_id())
             return $this->response_error('Comment not found');
 
         $user=User_model::get_user();
@@ -156,7 +156,7 @@ class Main_page extends MY_Controller
     {
         // TODO: task 3, лайк поста
         $post=Post_model::find($post_id);
-        if(!$post)
+        if(!$post->get_id())
             return $this->response_error('Post not found');
 
         $user=User_model::get_user();
@@ -180,8 +180,47 @@ class Main_page extends MY_Controller
     {
         // TODO: task 4, пополнение баланса
 
-        $sum = (float)App::get_ci()->input->post('sum');
+        $this->load->library('form_validation');
+        $validator=App::get_ci()->form_validation;
+        $validator->set_rules('sum', 'Sum', 'required|numeric|min_length[1]')
+            ->set_rules('email','Email','required|valid_email');
+        if(!$validator->run())
+            return $this->response_error($validator->error_string());
 
+        $input=App::get_ci()->input;
+        $sum = (float)$input->post('sum');
+
+        // Не хватает данных пользователя
+        $email = (string)$input->post('email');
+        // Не хватает проверки источника данных по хосту, серетному ключу и шифрованию данных
+
+        $user=User_model::find_user_by_email($email);
+        if(!$user->get_id())
+            return $this->response_error('User not found');
+
+        if(!$user->add_money($sum))
+            return  $this->response_error('Something went wrong');
+
+        // -- Транзакция объединяет запросы для того чтобы выполнились либо оба,
+        // либо не одного чтобы не было не согласованных изменений
+        // -- Обнолвнеие значений полей пользвателя нужно выполенять через получение данных из того же запроса,
+        // чтобы данные были точные: Если вместо этого запроса просто обновить данные полученые из увеличения
+        // суммы полученных данных из SELECT запроса и после выполнить UPDATE то данные могут быть паралельно
+        // обновлены другим потоком в перыве между SELECT и UPDATE  и это привет к тому что на балансе не
+        // будут отображаться данные внесенные этим параллельным потоком
+        // -- Лог операций в отдельной таблице необходим для возможности дальнейшей отмены операции
+
+
+        // PS: Фраза "максимально безопасна и отказоустойчива" сбивет меня с толку.
+        // Я не могу понять что под этим подразумевается. Возможно я не сталкивался с подобными проблемами,
+        // обосновние, который вы ожидаете, либо это тривиально для меня. Я вижу только одно верное решение (которое
+        // я реализовал). Единственное что приходит на ум это сменить MYsql на Postgres =)
+        // Что тут обосновывать не прдеставляю. Ясно что не давая подробного описания, вы не хотите давать подскаку
+        // к решению, однако, как я уже писал, вызываете дессонанс. Думаю правильнее задать этот вопрос во время
+        // беседы после выполнения. И если я не дал того обоснования которого вы ожидаете, я был бы признателен, если бы
+        // мне дали пояснения
+
+        return $this->response(['success'=>true]);
     }
 
     public function get_post(int $post_id) {

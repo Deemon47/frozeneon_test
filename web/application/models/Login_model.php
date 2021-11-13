@@ -26,9 +26,10 @@ class Login_model extends CI_Model {
     public static function login(): User_model
     {
         // TODO: task 1, аутентификация
-        $user=User_model::find_user_by_email($_POST['login']);
+        $input=App::get_ci()->input;
+        $user=User_model::find_user_by_email((string)$input->post('login'));
         //TODO: Зашифровать пароль в БД и сравнивать чрез Hash функцию
-        if(!$user || $user->get_password()!=$_POST['password'])
+        if($user->get_password()!=(string)$input->post('password'))
         {
             throw new Exception('Login or password is invalid');
         }
