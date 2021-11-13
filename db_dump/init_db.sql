@@ -17,6 +17,7 @@ CREATE TABLE `analytics` (
   `action` varchar(50) NOT NULL,
   `object_id` int(11) DEFAULT NULL,
   `amount` int(11) DEFAULT NULL,
+  `likes` int(11) DEFAULT NULL,
   `time_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `time_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)

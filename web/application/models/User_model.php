@@ -283,8 +283,8 @@ class User_model extends Emerald_model {
                 ->execute()
             || !Analytics_model::create([
                 'user_id'=>$this->get_id(),
-                'object'=>'wallet',
-                'action'=>'refill',
+                'object'=>Transaction_info::WALLET,
+                'action'=>Transaction_type::REFILL,
                 'amount'=>$sum,
             ]))
         {
@@ -302,19 +302,26 @@ class User_model extends Emerald_model {
      * @return bool
      * @throws \ShadowIgniterException
      */
-    public function remove_money(float $sum,int $likes=0): bool
+    public function remove_money(float $sum,int $likes=0,int $bp_id=null): bool
     {
         // TODO: task 5, списание денег
         $updateStr=sprintf('wallet_balance = wallet_balance - %s', App::get_s()->quote($sum));
         if($likes)
             $updateStr.=sprintf(', likes_balance = likes_balance - %s', App::get_s()->quote($likes));
 
-        App::get_s()->from(self::get_table())
-            ->where(['id' => $this->get_id()])
-            ->update($updateStr)
-            ->execute();
+        return  App::get_s()->from(self::get_table())
+                ->where(['id' => $this->get_id()])
+                ->update($updateStr)
+                ->execute()
+            && Analytics_model::create([
+                'user_id'=>$this->get_id(),
+                'object'=>Transaction_info::BOOSTERPACK,
+                'object_id'=>$bp_id,
+                'action'=>Transaction_type::BUY,
+                'likes'=>$likes?$likes:null,
+                'amount'=>$sum,
+            ]);
 
-        return App::get_s()->is_affected();
     }
 
     /**

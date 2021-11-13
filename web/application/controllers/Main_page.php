@@ -251,7 +251,7 @@ class Main_page extends MY_Controller
         App::get_s()->start_trans();
         try {
             $amount=$pack->open();
-            $user->remove_money($pack->get_price(),$amount);
+            $user->remove_money($pack->get_price(),$amount,$pack->get_id());
 
         }
         catch (Exception $e)
